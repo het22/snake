@@ -1,8 +1,9 @@
+import { TILE_SIZE } from '@/constants'
 import MainScene from '@/game/scenes/MainScene'
 
 interface SnakeSegment {
-    gridX: number
-    gridY: number
+    column: number
+    row: number
     gameObject: Phaser.GameObjects.Container | Phaser.GameObjects.Rectangle
 }
 
@@ -13,68 +14,9 @@ export default class Snake {
     private lastMoveTime: number = 0
     private moveInterval: number = 300
 
-    constructor(scene: MainScene, startGridX: number, startGridY: number) {
+    constructor(scene: MainScene) {
         this.scene = scene
-        this.initSegments(startGridX, startGridY)
         this.setupControls()
-    }
-
-    private initSegments(startGridX: number, startGridY: number): void {
-        const head = this.scene.add.container(
-            startGridX * this.scene.gridSize,
-            startGridY * this.scene.gridSize
-        )
-        head.setDepth(1)
-
-        const headShape = this.scene.add.rectangle(
-            0,
-            0,
-            this.scene.gridSize - 2,
-            this.scene.gridSize - 2,
-            0xffffff
-        )
-        headShape.setOrigin(0, 0)
-        const eyeSize = 4
-        const leftEye = this.scene.add.rectangle(
-            2,
-            6,
-            eyeSize,
-            eyeSize,
-            0x000000
-        )
-        leftEye.setOrigin(0, 0)
-        const rightEye = this.scene.add.rectangle(
-            12,
-            6,
-            eyeSize,
-            eyeSize,
-            0x000000
-        )
-        rightEye.setOrigin(0, 0)
-
-        head.add([headShape, leftEye, rightEye])
-
-        this.segments.push({
-            gridX: startGridX,
-            gridY: startGridY,
-            gameObject: head,
-        })
-
-        for (let i = 1; i < 3; i++) {
-            const segment = this.scene.add.rectangle(
-                startGridX * this.scene.gridSize,
-                startGridY * this.scene.gridSize,
-                this.scene.gridSize - 2,
-                this.scene.gridSize - 2,
-                0xffffff
-            )
-            segment.setOrigin(0, 0)
-            this.segments.push({
-                gridX: startGridX,
-                gridY: startGridY,
-                gameObject: segment,
-            })
-        }
     }
 
     private setupControls(): void {
@@ -96,6 +38,66 @@ export default class Snake {
         })
     }
 
+    draw(column: number, row: number): void {
+        const head = this.scene.add.container(
+            column * TILE_SIZE + 1,
+            row * TILE_SIZE + 1
+        )
+        head.setDepth(1)
+
+        const headShape = this.scene.add.rectangle(
+            0,
+            0,
+            TILE_SIZE - 2,
+            TILE_SIZE - 2,
+            0xffffff
+        )
+        headShape.setOrigin(0, 0)
+
+        const eyeSize = 4
+        const leftEye = this.scene.add.rectangle(
+            2,
+            6,
+            eyeSize,
+            eyeSize,
+            0x000000
+        )
+        leftEye.setOrigin(0, 0)
+
+        const rightEye = this.scene.add.rectangle(
+            12,
+            6,
+            eyeSize,
+            eyeSize,
+            0x000000
+        )
+        rightEye.setOrigin(0, 0)
+
+        head.add([headShape, leftEye, rightEye])
+
+        this.segments.push({
+            column,
+            row,
+            gameObject: head,
+        })
+
+        for (let i = 1; i < 3; i++) {
+            const segment = this.scene.add.rectangle(
+                column * TILE_SIZE + 1,
+                row * TILE_SIZE + 1,
+                TILE_SIZE - 2,
+                TILE_SIZE - 2,
+                0xffffff
+            )
+            segment.setOrigin(0, 0)
+            this.segments.push({
+                column,
+                row,
+                gameObject: segment,
+            })
+        }
+    }
+
     update(time: number): void {
         if (time - this.lastMoveTime > this.moveInterval) {
             this.move()
@@ -105,42 +107,32 @@ export default class Snake {
 
     move(): void {
         const currentHead = this.segments[0]
-        const nextGridX =
-            currentHead.gridX +
+        const nextColumn =
+            currentHead.column +
             (this.direction === 'right'
                 ? 1
                 : this.direction === 'left'
                 ? -1
                 : 0)
-        const nextGridY =
-            currentHead.gridY +
+        const nextRow =
+            currentHead.row +
             (this.direction === 'down' ? 1 : this.direction === 'up' ? -1 : 0)
 
-        if (
-            nextGridX < 0 ||
-            nextGridX >= this.scene.gridMaxX ||
-            nextGridY < 0 ||
-            nextGridY >= this.scene.gridMaxY
-        ) {
-            return
-        }
-
-        if (this.scene.map.isWall(nextGridX, nextGridY)) {
+        if (this.scene.currentMap.tiles[nextRow][nextColumn].isCollidable) {
             return
         }
 
         for (let i = this.segments.length - 1; i > 0; i--) {
-            this.segments[i].gridX = this.segments[i - 1].gridX
-            this.segments[i].gridY = this.segments[i - 1].gridY
+            this.segments[i].column = this.segments[i - 1].column
+            this.segments[i].row = this.segments[i - 1].row
             this.segments[i].gameObject.x =
-                this.segments[i].gridX * this.scene.gridSize
-            this.segments[i].gameObject.y =
-                this.segments[i].gridY * this.scene.gridSize
+                this.segments[i].column * TILE_SIZE + 1
+            this.segments[i].gameObject.y = this.segments[i].row * TILE_SIZE + 1
         }
 
-        this.segments[0].gridX = nextGridX
-        this.segments[0].gridY = nextGridY
-        this.segments[0].gameObject.x = nextGridX * this.scene.gridSize
-        this.segments[0].gameObject.y = nextGridY * this.scene.gridSize
+        this.segments[0].column = nextColumn
+        this.segments[0].row = nextRow
+        this.segments[0].gameObject.x = nextColumn * TILE_SIZE + 1
+        this.segments[0].gameObject.y = nextRow * TILE_SIZE + 1
     }
 }
