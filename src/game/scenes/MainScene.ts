@@ -32,7 +32,7 @@ export default class MainScene extends Scene {
         EventBus.emit('current-scene-ready', this)
     }
 
-    update(time: number) {
-        this.snake.update(time)
+    update() {
+        this.snake.update()
     }
 }
