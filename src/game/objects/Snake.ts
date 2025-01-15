@@ -19,11 +19,8 @@ export default class Snake {
         this.cursors = scene.input.keyboard!.createCursorKeys()
     }
 
-    draw(column: number, row: number): void {
-        const head = this.scene.add.container(
-            column * TILE_SIZE,
-            row * TILE_SIZE
-        )
+    private createHead() {
+        const head = this.scene.add.container()
         head.setDepth(1)
 
         const headShape = this.scene.add.rectangle(
@@ -40,6 +37,24 @@ export default class Snake {
         const rightEye = this.scene.add.circle(15, 8, eyeSize, 0x000000)
         head.add([headShape, leftEye, rightEye])
 
+        return head
+    }
+
+    private createBody() {
+        const body = this.scene.add.rectangle(
+            0,
+            0,
+            TILE_SIZE,
+            TILE_SIZE,
+            0xffffff
+        )
+        body.setOrigin(0, 0)
+        return body
+    }
+
+    draw(column: number, row: number): void {
+        const head = this.createHead()
+        head.setPosition(column * TILE_SIZE, row * TILE_SIZE)
         this.segments.push({
             column,
             row,
@@ -47,18 +62,12 @@ export default class Snake {
         })
 
         for (let i = 1; i < 3; i++) {
-            const segment = this.scene.add.rectangle(
-                column * TILE_SIZE,
-                row * TILE_SIZE,
-                TILE_SIZE,
-                TILE_SIZE,
-                0xffffff
-            )
-            segment.setOrigin(0, 0)
+            const body = this.createBody()
+            body.setPosition(column * TILE_SIZE, row * TILE_SIZE)
             this.segments.push({
                 column,
                 row,
-                gameObject: segment,
+                gameObject: body,
             })
         }
     }
@@ -98,6 +107,20 @@ export default class Snake {
         this.segments[0].gameObject.y = nextRow * TILE_SIZE
     }
 
+    grow() {
+        const lastSegment = this.segments[this.segments.length - 1]
+        const body = this.createBody()
+        body.setPosition(
+            lastSegment.column * TILE_SIZE,
+            lastSegment.row * TILE_SIZE
+        )
+        this.segments.push({
+            column: lastSegment.column,
+            row: lastSegment.row,
+            gameObject: body,
+        })
+    }
+
     update(): void {
         const keysDown = [
             this.cursors.up,
@@ -123,5 +146,17 @@ export default class Snake {
         } else {
             this.moveFrameCount = this.moveFrameRate
         }
+
+        this.scene.currentMap.foods
+            .filter((food) => !food.isEaten)
+            .forEach((food) => {
+                if (
+                    this.segments[0].column === food.column &&
+                    this.segments[0].row === food.row
+                ) {
+                    food.eaten()
+                    this.grow()
+                }
+            })
     }
 }

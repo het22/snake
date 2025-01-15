@@ -1,5 +1,6 @@
 import { TILE_SIZE } from '@/constants'
 import MainScene from '@/game/scenes/MainScene'
+import Food from '@/game/objects/Food'
 
 type Tile = {
     fill: Fill
@@ -15,6 +16,10 @@ export default class TileMap {
     name: string
     scene: MainScene
     tiles: Array<Array<Tile>>
+
+    get foods(): Food[] {
+        return this.scene.foods.filter((food) => food.map === this)
+    }
 
     private constructor(
         scene: MainScene,

@@ -2,6 +2,7 @@ import { Scene } from 'phaser'
 import EventBus from '@/game/EventBus'
 import Snake from '@/game/objects/Snake'
 import TileMap from '@/game/objects/TileMap'
+import Food from '@/game/objects/Food'
 
 export default class MainScene extends Scene {
     constructor() {
@@ -10,6 +11,10 @@ export default class MainScene extends Scene {
 
     get snake(): Snake {
         return this.data.get('snake')
+    }
+
+    get foods(): Food[] {
+        return this.data.get('foods')
     }
 
     get currentMap(): TileMap {
@@ -28,6 +33,14 @@ export default class MainScene extends Scene {
         const snake = new Snake(this)
         snake.draw(10, 10)
         this.data.set('snake', snake)
+
+        const foods = [
+            new Food(this, map, 3, 6),
+            new Food(this, map, 14, 2),
+            new Food(this, map, 18, 17),
+        ]
+        foods.forEach((food) => food.draw())
+        this.data.set('foods', foods)
 
         EventBus.emit('current-scene-ready', this)
     }
