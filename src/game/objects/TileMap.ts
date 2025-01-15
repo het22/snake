@@ -32,16 +32,24 @@ export default class TileMap {
     }
 
     static create(scene: MainScene, mapData: any) {
-        return new TileMap(
-            scene,
-            mapData.name,
-            Array.from({ length: mapData.rowCount }, (_, row) =>
-                Array.from({ length: mapData.columnCount }, (_, column) => ({
-                    fill: mapData.visualTiles[row][column],
-                    isCollidable: mapData.logicalTiles[row][column] === 1,
-                }))
+        const tiles = Array.from({ length: mapData.rowCount }, (_, row) =>
+            Array.from({ length: mapData.columnCount }, (_, column) => ({
+                fill: mapData.visualTiles[row][column],
+                isCollidable: mapData.logicalTiles[row][column] === 1,
+            }))
+        )
+
+        const map = new TileMap(scene, mapData.name, tiles)
+
+        scene.data.set(
+            'foods',
+            (scene.data.get('foods') ?? []).concat(
+                mapData.foods.map(
+                    (food: any) => new Food(scene, map, food.column, food.row)
+                )
             )
         )
+        return map
     }
 
     draw() {
@@ -77,5 +85,7 @@ export default class TileMap {
                 }
             }
         }
+
+        this.foods.forEach((food) => food.draw())
     }
 }

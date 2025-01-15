@@ -34,14 +34,6 @@ export default class MainScene extends Scene {
         snake.draw(10, 10)
         this.data.set('snake', snake)
 
-        const foods = [
-            new Food(this, map, 3, 6),
-            new Food(this, map, 14, 2),
-            new Food(this, map, 18, 17),
-        ]
-        foods.forEach((food) => food.draw())
-        this.data.set('foods', foods)
-
         EventBus.emit('current-scene-ready', this)
     }
 
