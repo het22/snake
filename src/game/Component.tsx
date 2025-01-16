@@ -3,8 +3,11 @@ import MainScene from '@/game/scenes/MainScene'
 
 const config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
-    width: 420,
-    height: 420,
+    scale: {
+        parent: 'game-container',
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+    },
     backgroundColor: '#000',
     scene: [MainScene],
 }

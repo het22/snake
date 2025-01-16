@@ -12,8 +12,7 @@ export enum Fill {
     Normal = 1,
 }
 
-export default class TileMap {
-    name: string
+export default class TileMap extends Phaser.GameObjects.Container {
     scene: MainScene
     tiles: Array<Array<Tile>>
 
@@ -21,13 +20,16 @@ export default class TileMap {
         return this.scene.foods.filter((food) => food.map === this)
     }
 
-    private constructor(
-        scene: MainScene,
-        name: string,
-        tiles: Array<Array<Tile>>
-    ) {
-        this.scene = scene
-        this.name = name
+    get columnSize(): number {
+        return this.tiles[0].length
+    }
+
+    get rowSize(): number {
+        return this.tiles.length
+    }
+
+    private constructor(scene: MainScene, tiles: Array<Array<Tile>>) {
+        super(scene)
         this.tiles = tiles
     }
 
@@ -39,13 +41,19 @@ export default class TileMap {
             }))
         )
 
-        const map = new TileMap(scene, mapData.name, tiles)
+        const map = new TileMap(scene, tiles)
+        map.name = mapData.name
+        map.setX(
+            (scene.game.canvas.width - mapData.columnCount * TILE_SIZE) / 2
+        )
+        map.setY((scene.game.canvas.height - mapData.rowCount * TILE_SIZE) / 2)
+        scene.add.existing(map)
 
         scene.data.set(
             'foods',
             (scene.data.get('foods') ?? []).concat(
                 mapData.foods.map(
-                    (food: any) => new Food(scene, map, food.column, food.row)
+                    (food: any) => new Food(map, food.column, food.row)
                 )
             )
         )
@@ -53,36 +61,40 @@ export default class TileMap {
     }
 
     draw() {
-        const columnCount = this.tiles[0].length
-        const rowCount = this.tiles.length
-        const tileMapOrigin = {
-            x: (this.scene.game.canvas.width - columnCount * TILE_SIZE) / 2,
-            y: (this.scene.game.canvas.height - rowCount * TILE_SIZE) / 2,
-        }
-
-        for (let row = 0; row < rowCount; row++) {
-            for (let column = 0; column < columnCount; column++) {
+        for (let row = 0; row < this.rowSize; row++) {
+            for (let column = 0; column < this.columnSize; column++) {
                 const tile = this.tiles[row][column]
-                const tileOrigin = {
-                    x: tileMapOrigin.x + column * TILE_SIZE,
-                    y: tileMapOrigin.y + row * TILE_SIZE,
-                }
+                const tileOriginX = column * TILE_SIZE
+                const tileOriginY = row * TILE_SIZE
+
+                let tileObject: Phaser.GameObjects.GameObject
 
                 switch (tile.fill) {
                     case Fill.Normal:
-                        this.scene.add
+                        tileObject = this.scene.add
                             .rectangle(
-                                tileOrigin.x,
-                                tileOrigin.y,
+                                tileOriginX,
+                                tileOriginY,
+                                TILE_SIZE,
+                                TILE_SIZE,
+                                0x000000
+                            )
+                            .setOrigin(0, 0)
+                        break
+                    case Fill.Empty:
+                        tileObject = this.scene.add
+                            .rectangle(
+                                tileOriginX,
+                                tileOriginY,
                                 TILE_SIZE,
                                 TILE_SIZE,
                                 0xffffff
                             )
                             .setOrigin(0, 0)
                         break
-                    case Fill.Empty:
-                        break
                 }
+
+                this.add(tileObject)
             }
         }
 

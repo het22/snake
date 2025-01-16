@@ -1,82 +1,39 @@
 import { TILE_SIZE } from '@/constants'
 import MainScene from '@/game/scenes/MainScene'
 
-interface SnakeSegment {
-    column: number
-    row: number
-    gameObject: Phaser.GameObjects.Container | Phaser.GameObjects.Rectangle
-}
-
-export default class Snake {
-    private scene: MainScene
+export default class Snake extends Phaser.GameObjects.Container {
+    scene: MainScene
+    segments: Segment[]
     private cursors: Phaser.Types.Input.Keyboard.CursorKeys
-    private segments: SnakeSegment[] = []
     private readonly moveFrameRate = 6
     private moveFrameCount = this.moveFrameRate
 
+    get head(): Head {
+        return this.segments[0]
+    }
+
+    get tail(): Body {
+        return this.segments[this.segments.length - 1]
+    }
+
     constructor(scene: MainScene) {
-        this.scene = scene
+        super(scene)
+        this.segments = []
         this.cursors = scene.input.keyboard!.createCursorKeys()
     }
 
-    private createHead() {
-        const head = this.scene.add.container()
-        head.setDepth(1)
-
-        const headShape = this.scene.add.rectangle(
-            0,
-            0,
-            TILE_SIZE,
-            TILE_SIZE,
-            0xffffff
-        )
-        headShape.setOrigin(0, 0)
-
-        const eyeSize = 2
-        const leftEye = this.scene.add.circle(5, 8, eyeSize, 0x000000)
-        const rightEye = this.scene.add.circle(15, 8, eyeSize, 0x000000)
-        head.add([headShape, leftEye, rightEye])
-
-        return head
-    }
-
-    private createBody() {
-        const body = this.scene.add.rectangle(
-            0,
-            0,
-            TILE_SIZE,
-            TILE_SIZE,
-            0xffffff
-        )
-        body.setOrigin(0, 0)
-        return body
-    }
-
     draw(column: number, row: number): void {
-        const head = this.createHead()
-        head.setPosition(column * TILE_SIZE, row * TILE_SIZE)
-        this.segments.push({
-            column,
-            row,
-            gameObject: head,
-        })
-
-        for (let i = 1; i < 3; i++) {
-            const body = this.createBody()
-            body.setPosition(column * TILE_SIZE, row * TILE_SIZE)
-            this.segments.push({
-                column,
-                row,
-                gameObject: body,
-            })
-        }
+        this.segments.push(new Head(this.scene, column, row))
+        this.segments.push(new Body(this.scene, column, row))
+        this.segments.push(new Body(this.scene, column, row))
+        this.segments.push(new Body(this.scene, column, row))
+        this.add([...this.segments].reverse())
+        this.scene.currentMap.add(this)
     }
 
     move(key: Phaser.Input.Keyboard.Key): void {
-        const currentHead = this.segments[0]
-
-        let nextColumn = currentHead.column
-        let nextRow = currentHead.row
+        let nextColumn = this.head.column
+        let nextRow = this.head.row
 
         if (key.keyCode === Phaser.Input.Keyboard.KeyCodes.RIGHT) {
             nextColumn++
@@ -97,28 +54,16 @@ export default class Snake {
         for (let i = this.segments.length - 1; i > 0; i--) {
             this.segments[i].column = this.segments[i - 1].column
             this.segments[i].row = this.segments[i - 1].row
-            this.segments[i].gameObject.x = this.segments[i].column * TILE_SIZE
-            this.segments[i].gameObject.y = this.segments[i].row * TILE_SIZE
         }
 
         this.segments[0].column = nextColumn
         this.segments[0].row = nextRow
-        this.segments[0].gameObject.x = nextColumn * TILE_SIZE
-        this.segments[0].gameObject.y = nextRow * TILE_SIZE
     }
 
     grow() {
-        const lastSegment = this.segments[this.segments.length - 1]
-        const body = this.createBody()
-        body.setPosition(
-            lastSegment.column * TILE_SIZE,
-            lastSegment.row * TILE_SIZE
-        )
-        this.segments.push({
-            column: lastSegment.column,
-            row: lastSegment.row,
-            gameObject: body,
-        })
+        const body = new Body(this.scene, this.tail.column, this.tail.row)
+        this.segments.push(body)
+        this.addAt(body, 0)
     }
 
     update(): void {
@@ -158,5 +103,58 @@ export default class Snake {
                     this.grow()
                 }
             })
+    }
+}
+
+class Segment extends Phaser.GameObjects.Container {
+    private _column: number
+    private _row: number
+
+    constructor(scene: MainScene, column: number, row: number) {
+        super(scene)
+        this.column = column
+        this.row = row
+    }
+
+    get column(): number {
+        return this._column
+    }
+
+    get row(): number {
+        return this._row
+    }
+
+    set column(value: number) {
+        this._column = value
+        this.setX(value * TILE_SIZE)
+    }
+
+    set row(value: number) {
+        this._row = value
+        this.setY(value * TILE_SIZE)
+    }
+}
+
+class Head extends Segment {
+    constructor(scene: MainScene, column: number, row: number) {
+        super(scene, column, row)
+        this.add([
+            this.scene.add
+                .rectangle(0, 0, TILE_SIZE, TILE_SIZE, 0x000000)
+                .setOrigin(0, 0),
+            this.scene.add.circle(5, 8, 2, 0xffffff),
+            this.scene.add.circle(15, 8, 2, 0xffffff),
+        ])
+    }
+}
+
+class Body extends Segment {
+    constructor(scene: MainScene, column: number, row: number) {
+        super(scene, column, row)
+        this.add(
+            this.scene.add
+                .rectangle(0, 0, TILE_SIZE, TILE_SIZE, 0x000000)
+                .setOrigin(0, 0)
+        )
     }
 }

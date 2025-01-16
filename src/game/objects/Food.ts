@@ -1,22 +1,14 @@
 import { TILE_SIZE } from '@/constants'
 import TileMap from '@/game/objects/TileMap'
 
-export default class Food {
-    private scene: Phaser.Scene
-    private gameObject: Phaser.GameObjects.Arc
-
+export default class Food extends Phaser.GameObjects.Container {
     map: TileMap
     column: number
     row: number
     isEaten: boolean
 
-    constructor(
-        scene: Phaser.Scene,
-        map: TileMap,
-        column: number,
-        row: number
-    ) {
-        this.scene = scene
+    constructor(map: TileMap, column: number, row: number) {
+        super(map.scene)
         this.map = map
         this.column = column
         this.row = row
@@ -24,16 +16,15 @@ export default class Food {
     }
 
     draw() {
-        this.gameObject = this.scene.add.circle(
-            (this.column + 0.5) * TILE_SIZE,
-            (this.row + 0.5) * TILE_SIZE,
-            5,
-            0xffffff
-        )
+        this.add(this.scene.add.circle(0, 0, 5, 0x000000))
+        this.add(this.scene.add.circle(0, 0, 2, 0xffffff))
+        this.setX((this.column + 0.5) * TILE_SIZE)
+        this.setY((this.row + 0.5) * TILE_SIZE)
+        this.map.add(this)
     }
 
     eaten() {
-        this.gameObject.destroy()
+        this.destroy()
         this.isEaten = true
     }
 }
