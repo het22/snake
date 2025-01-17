@@ -23,10 +23,11 @@ export default class MainScene extends Scene {
 
     preload() {
         this.load.json('startMap', '/assets/maps/start.json')
+        this.load.json('cave', '/assets/maps/cave.json')
     }
 
     create() {
-        const map = TileMap.create(this, this.cache.json.get('startMap'))
+        const map = TileMap.create(this, this.cache.json.get('cave'))
         map.draw()
         this.data.set('currentMap', map)
 

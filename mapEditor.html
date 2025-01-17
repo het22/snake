@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Tile Map Editor</title>
+        <style>
+            .container {
+                display: flex;
+                gap: 20px;
+                padding: 20px;
+            }
+            #canvas {
+                border: 1px solid #000;
+            }
+            .controls {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .tool-button {
+                padding: 5px 10px;
+                cursor: pointer;
+            }
+            .active {
+                background-color: #ddd;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <canvas id="canvas" width="630" height="630"></canvas>
+            <div class="controls">
+                <div>
+                    <label>가로 크기: </label>
+                    <input
+                        type="number"
+                        id="columnCount"
+                        value="21"
+                        min="5"
+                        max="50"
+                    />
+                    <label>세로 크기: </label>
+                    <input
+                        type="number"
+                        id="rowCount"
+                        value="21"
+                        min="5"
+                        max="50"
+                    />
+                    <button id="resizeButton">크기 변경</button>
+                </div>
+                <div>
+                    <button class="tool-button active" data-tile="0">
+                        빈 공간 (0)
+                    </button>
+                    <button class="tool-button" data-tile="1">벽 (1)</button>
+                    <button class="tool-button" data-food="true">
+                        음식 추가
+                    </button>
+                </div>
+                <div>
+                    <button id="exportButton">JSON 내보내기</button>
+                </div>
+                <div>
+                    <input type="file" id="importFile" accept=".json" />
+                    <button id="importButton">JSON 불러오기</button>
+                </div>
+                <div>
+                    <textarea
+                        id="output"
+                        rows="10"
+                        cols="50"
+                        readonly
+                    ></textarea>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            const canvas = document.getElementById('canvas')
+            const ctx = canvas.getContext('2d')
+            const TILE_SIZE = 30
+            let COLUMN_COUNT = 21
+            let ROW_COUNT = 21
+
+            let currentTile = '0'
+            let isFood = false
+            let visualTiles = Array(ROW_COUNT)
+                .fill()
+                .map(() => Array(COLUMN_COUNT).fill(0))
+            let logicalTiles = Array(ROW_COUNT)
+                .fill()
+                .map(() => Array(COLUMN_COUNT).fill(0))
+            let foods = []
+
+            // 그리드 그리기
+            function drawGrid() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+                // 타일 그리기
+                for (let row = 0; row < ROW_COUNT; row++) {
+                    for (let col = 0; col < COLUMN_COUNT; col++) {
+                        const x = col * TILE_SIZE
+                        const y = row * TILE_SIZE
+
+                        ctx.fillStyle =
+                            visualTiles[row][col] === 1 ? '#666' : '#fff'
+                        ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE)
+                        ctx.strokeRect(x, y, TILE_SIZE, TILE_SIZE)
+                    }
+                }
+
+                // 음식 그리기
+                foods.forEach((food) => {
+                    ctx.fillStyle = 'red'
+                    ctx.beginPath()
+                    ctx.arc(
+                        food.column * TILE_SIZE + TILE_SIZE / 2,
+                        food.row * TILE_SIZE + TILE_SIZE / 2,
+                        TILE_SIZE / 4,
+                        0,
+                        Math.PI * 2
+                    )
+                    ctx.fill()
+                })
+            }
+
+            // 마우스 이벤트 처리
+            canvas.addEventListener('mousedown', handleCanvasClick)
+            canvas.addEventListener('mousemove', (e) => {
+                if (e.buttons === 1) handleCanvasClick(e)
+            })
+
+            function handleCanvasClick(e) {
+                const rect = canvas.getBoundingClientRect()
+                const x = e.clientX - rect.left
+                const y = e.clientY - rect.top
+
+                const col = Math.floor(x / TILE_SIZE)
+                const row = Math.floor(y / TILE_SIZE)
+
+                if (
+                    col >= 0 &&
+                    col < COLUMN_COUNT &&
+                    row >= 0 &&
+                    row < ROW_COUNT
+                ) {
+                    if (isFood) {
+                        const existingFoodIndex = foods.findIndex(
+                            (food) => food.column === col && food.row === row
+                        )
+                        if (existingFoodIndex === -1) {
+                            foods.push({ column: col, row: row })
+                        } else {
+                            foods.splice(existingFoodIndex, 1)
+                        }
+                    } else {
+                        visualTiles[row][col] = parseInt(currentTile)
+                        logicalTiles[row][col] = parseInt(currentTile)
+                    }
+                    drawGrid()
+                }
+            }
+
+            // 도구 선택
+            document.querySelectorAll('.tool-button').forEach((button) => {
+                button.addEventListener('click', (e) => {
+                    document
+                        .querySelectorAll('.tool-button')
+                        .forEach((btn) => btn.classList.remove('active'))
+                    button.classList.add('active')
+
+                    if (button.dataset.food) {
+                        isFood = true
+                        currentTile = '0'
+                    } else {
+                        isFood = false
+                        currentTile = button.dataset.tile
+                    }
+                })
+            })
+
+            // 맵 초기화 함수
+            function initializeMap(columns, rows) {
+                COLUMN_COUNT = columns
+                ROW_COUNT = rows
+                canvas.width = COLUMN_COUNT * TILE_SIZE
+                canvas.height = ROW_COUNT * TILE_SIZE
+
+                visualTiles = Array(ROW_COUNT)
+                    .fill()
+                    .map(() => Array(COLUMN_COUNT).fill(0))
+                logicalTiles = Array(ROW_COUNT)
+                    .fill()
+                    .map(() => Array(COLUMN_COUNT).fill(0))
+                foods = []
+
+                drawGrid()
+            }
+
+            // 크기 변경 버튼 이벤트
+            document
+                .getElementById('resizeButton')
+                .addEventListener('click', () => {
+                    const newColumns = parseInt(
+                        document.getElementById('columnCount').value
+                    )
+                    const newRows = parseInt(
+                        document.getElementById('rowCount').value
+                    )
+
+                    if (
+                        newColumns >= 5 &&
+                        newColumns <= 50 &&
+                        newRows >= 5 &&
+                        newRows <= 50
+                    ) {
+                        if (
+                            confirm(
+                                '맵의 내용이 모두 초기화됩니다. 계속하시겠습니까?'
+                            )
+                        ) {
+                            initializeMap(newColumns, newRows)
+                        }
+                    } else {
+                        alert('맵 크기는 5에서 50 사이여야 합니다.')
+                    }
+                })
+
+            // JSON 내보내기
+            document
+                .getElementById('exportButton')
+                .addEventListener('click', () => {
+                    const mapData = {
+                        name: 'map',
+                        columnCount: COLUMN_COUNT,
+                        rowCount: ROW_COUNT,
+                        foods: foods,
+                        visualTiles: visualTiles,
+                        logicalTiles: logicalTiles,
+                    }
+
+                    document.getElementById('output').value = JSON.stringify(
+                        mapData,
+                        null,
+                        2
+                    )
+                })
+
+            // JSON 불러오기
+            document
+                .getElementById('importButton')
+                .addEventListener('click', () => {
+                    const fileInput = document.getElementById('importFile')
+                    const file = fileInput.files[0]
+
+                    if (!file) {
+                        alert('파일을 선택해주세요.')
+                        return
+                    }
+
+                    const reader = new FileReader()
+                    reader.onload = function (e) {
+                        try {
+                            const mapData = JSON.parse(e.target.result)
+
+                            // 맵 데이터 유효성 검사
+                            if (
+                                !mapData.columnCount ||
+                                !mapData.rowCount ||
+                                !mapData.visualTiles ||
+                                !mapData.logicalTiles ||
+                                !Array.isArray(mapData.foods)
+                            ) {
+                                throw new Error(
+                                    '유효하지 않은 맵 데이터입니다.'
+                                )
+                            }
+
+                            // 맵 크기 설정
+                            COLUMN_COUNT = mapData.columnCount
+                            ROW_COUNT = mapData.rowCount
+                            document.getElementById('columnCount').value =
+                                COLUMN_COUNT
+                            document.getElementById('rowCount').value =
+                                ROW_COUNT
+
+                            // 캔버스 크기 조정
+                            canvas.width = COLUMN_COUNT * TILE_SIZE
+                            canvas.height = ROW_COUNT * TILE_SIZE
+
+                            // 데이터 적용
+                            visualTiles = mapData.visualTiles
+                            logicalTiles = mapData.logicalTiles
+                            foods = mapData.foods
+
+                            // 맵 다시 그리기
+                            drawGrid()
+                        } catch (error) {
+                            alert(
+                                'JSON 파일을 불러오는 중 오류가 발생했습니다: ' +
+                                    error.message
+                            )
+                        }
+                    }
+                    reader.readAsText(file)
+                })
+
+            // 초기 그리드 그리기
+            initializeMap(COLUMN_COUNT, ROW_COUNT)
+        </script>
+    </body>
+</html>
