@@ -28,7 +28,7 @@ export default class Snake extends Phaser.GameObjects.Container {
         this.segments.push(new Body(this.scene, column, row))
         this.segments.push(new Body(this.scene, column, row))
         this.add([...this.segments].reverse())
-        this.scene.currentMap.add(this)
+        this.scene.world.currentMap.add(this)
     }
 
     move(key: Phaser.Input.Keyboard.Key): void {
@@ -47,7 +47,9 @@ export default class Snake extends Phaser.GameObjects.Container {
             return
         }
 
-        if (this.scene.currentMap.tiles[nextRow][nextColumn].isCollidable) {
+        if (
+            this.scene.world.currentMap.tiles[nextRow][nextColumn].isCollidable
+        ) {
             return
         }
 
@@ -92,7 +94,7 @@ export default class Snake extends Phaser.GameObjects.Container {
             this.moveFrameCount = this.moveFrameRate
         }
 
-        this.scene.currentMap.foods
+        this.scene.world.currentMap.foods
             .filter((food) => !food.isEaten)
             .forEach((food) => {
                 if (

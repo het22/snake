@@ -1,12 +1,16 @@
 import { Scene } from 'phaser'
 import EventBus from '@/game/EventBus'
 import Snake from '@/game/objects/Snake'
-import TileMap from '@/game/objects/TileMap'
 import Food from '@/game/objects/Food'
+import World from '../objects/World'
 
 export default class MainScene extends Scene {
     constructor() {
         super('Game')
+    }
+
+    get world(): World {
+        return this.data.get('world')
     }
 
     get snake(): Snake {
@@ -17,19 +21,13 @@ export default class MainScene extends Scene {
         return this.data.get('foods')
     }
 
-    get currentMap(): TileMap {
-        return this.data.get('currentMap')
-    }
-
     preload() {
-        this.load.json('startMap', '/assets/maps/start.json')
-        this.load.json('cave', '/assets/maps/cave.json')
+        this.data.set('world', new World(this))
+        this.world.preload()
     }
 
     create() {
-        const map = TileMap.create(this, this.cache.json.get('cave'))
-        map.draw()
-        this.data.set('currentMap', map)
+        this.world.create()
 
         const snake = new Snake(this)
         snake.draw(10, 10)
