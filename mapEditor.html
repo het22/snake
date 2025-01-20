@@ -108,6 +108,13 @@
                             visualTiles[row][col] === 1 ? '#666' : '#fff'
                         ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE)
                         ctx.strokeRect(x, y, TILE_SIZE, TILE_SIZE)
+
+                        // 좌표 텍스트 추가
+                        ctx.fillStyle = '#000'
+                        ctx.font = '10px Arial'
+                        ctx.textAlign = 'left'
+                        ctx.textBaseline = 'top'
+                        ctx.fillText(`${row},${col}`, x + 2, y + 2)
                     }
                 }
 
