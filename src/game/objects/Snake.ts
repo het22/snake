@@ -48,6 +48,15 @@ export default class Snake extends Phaser.GameObjects.Container {
         }
 
         if (
+            nextColumn < 0 ||
+            nextRow < 0 ||
+            nextColumn >= this.scene.world.currentMap.columnSize ||
+            nextRow >= this.scene.world.currentMap.rowSize
+        ) {
+            return
+        }
+
+        if (
             this.scene.world.currentMap.tiles[nextRow][nextColumn].isCollidable
         ) {
             return
