@@ -1,11 +1,9 @@
 import TileMap from '@/game/objects/TileMap'
 import MainScene from '../scenes/MainScene'
 
-type MapName = 'start' | 'cave'
-
 export default class World {
     scene: MainScene
-    maps: Map<MapName, TileMap>
+    maps: Map<string, TileMap>
     currentMap: TileMap
 
     constructor(scene: MainScene) {
@@ -14,6 +12,7 @@ export default class World {
     }
 
     preload() {
+        this.scene.load.json('portals', '/assets/maps/portals.json')
         this.scene.load.json('start', '/assets/maps/start.json')
         this.scene.load.json('cave', '/assets/maps/cave.json')
     }
@@ -22,11 +21,11 @@ export default class World {
         this.setCurrentMap('start')
     }
 
-    setCurrentMap(name: MapName) {
+    setCurrentMap(name: string) {
         let map = this.maps.get(name)
 
         if (!map) {
-            map = TileMap.create(this.scene, this.scene.cache.json.get(name))
+            map = TileMap.create(this.scene, name)
             this.maps.set(name, map)
         }
 

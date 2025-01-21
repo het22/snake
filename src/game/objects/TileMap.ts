@@ -3,8 +3,18 @@ import MainScene from '@/game/scenes/MainScene'
 import Food from '@/game/objects/Food'
 
 type Tile = {
+    mapName: string
+    column: number
+    row: number
     fill: Fill
     isCollidable: boolean
+    portal?: Portal
+}
+
+type Portal = {
+    mapName: string
+    column: number
+    row: number
 }
 
 export enum Fill {
@@ -33,13 +43,43 @@ export default class TileMap extends Phaser.GameObjects.Container {
         this.tiles = tiles
     }
 
-    static create(scene: MainScene, mapData: any) {
+    static create(scene: MainScene, mapName: string) {
+        const mapData = scene.cache.json.get(mapName)
+        if (!mapData) {
+            throw new Error(`맵 정보를 찾을 수 없습니다.(${mapName})`)
+        }
+
         const tiles = Array.from({ length: mapData.rowCount }, (_, row) =>
-            Array.from({ length: mapData.columnCount }, (_, column) => ({
-                fill: mapData.visualTiles[row][column],
-                isCollidable: mapData.logicalTiles[row][column] === 1,
-            }))
+            Array.from(
+                { length: mapData.columnCount },
+                (_, column) =>
+                    ({
+                        mapName: mapData.name,
+                        column,
+                        row,
+                        fill: mapData.visualTiles[row][column],
+                        isCollidable: mapData.logicalTiles[row][column] === 1,
+                    } as Tile)
+            )
         )
+
+        const portalsData = scene.cache.json.get('portals')
+        portalsData.forEach(([a, b]: any) => {
+            let from, to
+            if (a.mapName === mapData.name) {
+                ;[from, to] = [a, b]
+            } else if (b.mapName === mapData.name) {
+                ;[from, to] = [b, a]
+            } else {
+                return
+            }
+
+            tiles[from.row][from.column].portal = {
+                mapName: to.mapName,
+                column: to.column,
+                row: to.row,
+            }
+        })
 
         const map = new TileMap(scene, tiles)
         map.name = mapData.name

@@ -53,6 +53,14 @@ export default class Snake extends Phaser.GameObjects.Container {
             nextColumn >= this.scene.world.currentMap.columnSize ||
             nextRow >= this.scene.world.currentMap.rowSize
         ) {
+            const currentTile =
+                this.scene.world.currentMap.tiles[this.head.row][
+                    this.head.column
+                ]
+            if (currentTile.portal) {
+                this.scene.world.setCurrentMap(currentTile.portal.mapName)
+            }
+
             return
         }
 
