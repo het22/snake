@@ -1,22 +1,22 @@
 [
     [
-        { "mapName": "start", "column": 20, "row": 8 },
-        { "mapName": "cave", "column": 0, "row": 3 }
+        { "map": "start", "column": 20, "row": 8 },
+        { "map": "cave", "column": 0, "row": 3 }
     ],
     [
-        { "mapName": "start", "column": 20, "row": 9 },
-        { "mapName": "cave", "column": 0, "row": 4 }
+        { "map": "start", "column": 20, "row": 9 },
+        { "map": "cave", "column": 0, "row": 4 }
     ],
     [
-        { "mapName": "start", "column": 20, "row": 10 },
-        { "mapName": "cave", "column": 0, "row": 5 }
+        { "map": "start", "column": 20, "row": 10 },
+        { "map": "cave", "column": 0, "row": 5 }
     ],
     [
-        { "mapName": "start", "column": 20, "row": 11 },
-        { "mapName": "cave", "column": 0, "row": 6 }
+        { "map": "start", "column": 20, "row": 11 },
+        { "map": "cave", "column": 0, "row": 6 }
     ],
     [
-        { "mapName": "start", "column": 20, "row": 12 },
-        { "mapName": "cave", "column": 0, "row": 7 }
+        { "map": "start", "column": 20, "row": 12 },
+        { "map": "cave", "column": 0, "row": 7 }
     ]
 ]

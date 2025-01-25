@@ -2,7 +2,7 @@ import { Scene } from 'phaser'
 import EventBus from '@/game/EventBus'
 import Snake from '@/game/objects/Snake'
 import Food from '@/game/objects/Food'
-import World from '../objects/World'
+import World from '@/game/objects/World'
 
 export default class MainScene extends Scene {
     constructor() {
@@ -21,17 +21,22 @@ export default class MainScene extends Scene {
         return this.data.get('foods')
     }
 
+    init() {
+        const world = new World(this)
+        this.data.set('world', world)
+        this.add.existing(world)
+
+        const snake = new Snake(this)
+        this.data.set('snake', snake)
+    }
+
     preload() {
-        this.data.set('world', new World(this))
         this.world.preload()
     }
 
     create() {
-        this.world.create()
-
-        const snake = new Snake(this)
-        snake.draw(10, 10)
-        this.data.set('snake', snake)
+        this.world.setMap('start')
+        this.snake.create(this.world.map, 10, 10)
 
         EventBus.emit('current-scene-ready', this)
     }

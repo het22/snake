@@ -1,12 +1,13 @@
 import TileMap from '@/game/objects/TileMap'
-import MainScene from '../scenes/MainScene'
+import MainScene from '@/game/scenes/MainScene'
 
-export default class World {
+export default class World extends Phaser.GameObjects.Container {
     scene: MainScene
     maps: Map<string, TileMap>
-    currentMap: TileMap
+    map: TileMap
 
     constructor(scene: MainScene) {
+        super(scene)
         this.scene = scene
         this.maps = new Map()
     }
@@ -17,20 +18,18 @@ export default class World {
         this.scene.load.json('cave', '/assets/maps/cave.json')
     }
 
-    create() {
-        this.setCurrentMap('start')
+    addMap(name: string): TileMap {
+        const map = new TileMap(this.scene, name)
+        this.maps.set(name, map)
+        return map
     }
 
-    setCurrentMap(name: string) {
-        let map = this.maps.get(name)
+    setMap(name: string) {
+        const prevMap = this.map
+        prevMap?.removeFromDisplayList()
 
-        if (!map) {
-            map = TileMap.create(this.scene, name)
-            this.maps.set(name, map)
-        }
-
-        this.currentMap = map
-
-        map.draw()
+        const nextMap = this.maps.get(name) ?? this.addMap(name)
+        nextMap.addToDisplayList()
+        this.map = nextMap
     }
 }

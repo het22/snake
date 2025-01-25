@@ -13,9 +13,7 @@ export default class Food extends Phaser.GameObjects.Container {
         this.column = column
         this.row = row
         this.isEaten = false
-    }
 
-    draw() {
         this.add(this.scene.add.circle(0, 0, 5, 0x000000))
         this.add(this.scene.add.circle(0, 0, 2, 0xffffff))
         this.setX((this.column + 0.5) * TILE_SIZE)
