@@ -1,15 +1,33 @@
 import TileMap from '@/game/objects/TileMap'
 import MainScene from '@/game/scenes/MainScene'
-
-export default class World extends Phaser.GameObjects.Container {
+import { MapName } from '@/constants'
+export default class World {
     scene: MainScene
-    maps: Map<string, TileMap>
-    map: TileMap
+    maps: Map<MapName, TileMap>
+
+    private _map: TileMap | null
+
+    get map(): TileMap | null {
+        return this._map
+    }
+
+    set map(map: MapName | TileMap) {
+        const previousMap = this.map
+        previousMap?.destroy()
+
+        if (typeof map === 'string') {
+            this._map = this.maps.get(map)!
+        } else {
+            this._map = map
+        }
+
+        this.scene.add.existing(this._map.create())
+    }
 
     constructor(scene: MainScene) {
-        super(scene)
         this.scene = scene
         this.maps = new Map()
+        this._map = null
     }
 
     preload() {
@@ -18,18 +36,9 @@ export default class World extends Phaser.GameObjects.Container {
         this.scene.load.json('cave', '/assets/maps/cave.json')
     }
 
-    addMap(name: string): TileMap {
-        const map = new TileMap(this.scene, name)
-        this.maps.set(name, map)
-        return map
-    }
-
-    setMap(name: string) {
-        const prevMap = this.map
-        prevMap?.removeFromDisplayList()
-
-        const nextMap = this.maps.get(name) ?? this.addMap(name)
-        nextMap.addToDisplayList()
-        this.map = nextMap
+    create() {
+        for (const name of Object.values(MapName)) {
+            this.maps.set(name, new TileMap(this.scene, name))
+        }
     }
 }
